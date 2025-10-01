@@ -1,7 +1,11 @@
+import { logicalOperations } from "./operations/operations";
+
+type LogicalFunction = (values: boolean[]) => boolean;
 type LogicalOperation = 'AND' | 'OR' | 'XOR' | 'NOT' | 'NAND' | 'NOR';
 
 interface LogicalNode {
     operation?: LogicalOperation;
+    evaluator?: LogicalFunction;
     value?: boolean;
     children: LogicalNode[];
     parent?: LogicalNode;
@@ -51,23 +55,8 @@ class LogicalTree {
 
         if (node.operation) {
             const childValues = node.children.map(child => this.evaluateNode(child));
-
-            switch (node.operation) {
-                case "AND":
-                    return childValues.every(val => val);
-                case "OR":
-                    return childValues.some(val => val);
-                case "XOR":
-                    return childValues.reduce((acc, val) => acc !== val, false);
-                case 'NOT':
-                    return !childValues[0];
-                case 'NAND':
-                    return !childValues.every(val => val);
-                case 'NOR':
-                    return !childValues.some(val => val);
-                default:
-                    return false;
-            }
+            const operationFunction = logicalOperations[node.operation];
+            return operationFunction ? operationFunction(childValues) : false;
         }
 
         return false;
@@ -79,17 +68,11 @@ class LogicalTree {
     }
 }
 
-const tree = new LogicalTree('AND');
+const tree = new LogicalTree('XOR');
 const root = tree.getRoot()!;
 
-const orNode = tree.addOperationNode(root, 'OR');
-const xorNode = tree.addOperationNode(root, 'XOR');
-
-tree.addValueNode(orNode, true);
-tree.addValueNode(orNode, false);
-
-tree.addValueNode(xorNode, true);
-tree.addValueNode(xorNode, true);
+tree.addValueNode(root, true);
+tree.addValueNode(root, true);
 
 const result = tree.evaluate();
 console.log(result);
